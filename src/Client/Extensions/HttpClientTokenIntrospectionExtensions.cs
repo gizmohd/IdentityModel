@@ -14,36 +14,37 @@ namespace IdentityModel.Client;
 /// </summary>
 public static class HttpClientTokenIntrospectionExtensions
 {
-    /// <summary>
-    /// Sends an OAuth token introspection request.
-    /// </summary>
-    /// <param name="client">The client.</param>
-    /// <param name="request">The request.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
-    public static async Task<TokenIntrospectionResponse> IntrospectTokenAsync(this HttpMessageInvoker client, TokenIntrospectionRequest request, CancellationToken cancellationToken = default)
+  /// <summary>
+  /// Sends an OAuth token introspection request.
+  /// </summary>
+  /// <param name="client">The client.</param>
+  /// <param name="request">The request.</param>
+  /// <param name="cancellationToken">The cancellation token.</param>
+  /// <returns></returns>
+  public static async Task<TokenIntrospectionResponse> IntrospectTokenAsync(this HttpMessageInvoker client, TokenIntrospectionRequest request, CancellationToken cancellationToken = default)
+  {
+    var clone = request.Clone();
+
+    clone.Method = HttpMethod.Post;
+    clone.Parameters.AddRequired(OidcConstants.TokenIntrospectionRequest.Token, request.Token);
+    clone.Parameters.AddOptional(OidcConstants.TokenIntrospectionRequest.TokenTypeHint, request.TokenTypeHint);
+    clone.Prepare();
+
+    
+    try
     {
-        var clone = request.Clone();
+      using HttpResponseMessage response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+      return await ProtocolResponse.FromHttpResponseAsync<TokenIntrospectionResponse>(response).ConfigureAwait();
 
-        clone.Method = HttpMethod.Post;
-        clone.Parameters.AddRequired(OidcConstants.TokenIntrospectionRequest.Token, request.Token);
-        clone.Parameters.AddOptional(OidcConstants.TokenIntrospectionRequest.TokenTypeHint, request.TokenTypeHint);
-        clone.Prepare();
-
-        HttpResponseMessage response;
-        try
-        {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            return ProtocolResponse.FromException<TokenIntrospectionResponse>(ex);
-        }
-
-        return await ProtocolResponse.FromHttpResponseAsync<TokenIntrospectionResponse>(response).ConfigureAwait();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (Exception ex)
+    {
+      return ProtocolResponse.FromException<TokenIntrospectionResponse>(ex);
+    }
+     
+  }
 }

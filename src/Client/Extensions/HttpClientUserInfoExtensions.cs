@@ -14,39 +14,40 @@ namespace IdentityModel.Client;
 /// </summary>
 public static class HttpClientUserInfoExtensions
 {
-    /// <summary>
-    /// Sends a userinfo request.
-    /// </summary>
-    /// <param name="client">The client.</param>
-    /// <param name="request">The request.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
-    public static async Task<UserInfoResponse> GetUserInfoAsync(this HttpMessageInvoker client, UserInfoRequest request, CancellationToken cancellationToken = default)
+  /// <summary>
+  /// Sends a userinfo request.
+  /// </summary>
+  /// <param name="client">The client.</param>
+  /// <param name="request">The request.</param>
+  /// <param name="cancellationToken">The cancellation token.</param>
+  /// <returns></returns>
+  public static async Task<UserInfoResponse> GetUserInfoAsync(this HttpMessageInvoker client, UserInfoRequest request, CancellationToken cancellationToken = default)
+  {
+    if (request.Token.IsMissing()) throw new ArgumentNullException(nameof(request.Token));
+
+    var clone = request.Clone();
+
+    clone.Method = HttpMethod.Get;
+    clone.SetBearerToken(request.Token!);
+    clone.Prepare();
+
+
+    try
     {
-        if (request.Token.IsMissing()) throw new ArgumentNullException(nameof(request.Token));
+      using HttpResponseMessage response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+      // response.Content can be null in net462 and net471
+      var skipJsonParsing = response.Content?.Headers.ContentType?.MediaType != "application/json";
+      return await ProtocolResponse.FromHttpResponseAsync<UserInfoResponse>(response, skipJson: skipJsonParsing).ConfigureAwait();
 
-        var clone = request.Clone();
-
-        clone.Method = HttpMethod.Get;
-        clone.SetBearerToken(request.Token!);
-        clone.Prepare();
-
-        HttpResponseMessage response;
-        try
-        {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            return ProtocolResponse.FromException<UserInfoResponse>(ex);
-        }
-
-        // response.Content can be null in net462 and net471
-        var skipJsonParsing = response.Content?.Headers.ContentType?.MediaType != "application/json";
-        return await ProtocolResponse.FromHttpResponseAsync<UserInfoResponse>(response, skipJson: skipJsonParsing).ConfigureAwait();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (Exception ex)
+    {
+      return ProtocolResponse.FromException<UserInfoResponse>(ex);
+    }
+
+  }
 }

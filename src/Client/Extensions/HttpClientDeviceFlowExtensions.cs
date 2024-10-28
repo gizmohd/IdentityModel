@@ -15,42 +15,43 @@ namespace IdentityModel.Client;
 /// </summary>
 public static class HttpClientDeviceFlowExtensions
 {
-    /// <summary>
-    /// Sends a userinfo request.
-    /// </summary>
-    /// <param name="client">The client.</param>
-    /// <param name="request">The request.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
-    public static async Task<DeviceAuthorizationResponse> RequestDeviceAuthorizationAsync(this HttpMessageInvoker client, DeviceAuthorizationRequest request, CancellationToken cancellationToken = default)
+  /// <summary>
+  /// Sends a userinfo request.
+  /// </summary>
+  /// <param name="client">The client.</param>
+  /// <param name="request">The request.</param>
+  /// <param name="cancellationToken">The cancellation token.</param>
+  /// <returns></returns>
+  public static async Task<DeviceAuthorizationResponse> RequestDeviceAuthorizationAsync(this HttpMessageInvoker client, DeviceAuthorizationRequest request, CancellationToken cancellationToken = default)
+  {
+    var clone = request.Clone();
+
+    clone.Parameters.AddOptional(OidcConstants.AuthorizeRequest.Scope, request.Scope);
+    clone.Method = HttpMethod.Post;
+    clone.Prepare();
+
+    // make sure to send form encoded body (even if no parameters are in the body)
+    // todo: test with real implementation, maybe turn into a more formal feature
+    if (clone.Content == null)
     {
-        var clone = request.Clone();
-
-        clone.Parameters.AddOptional(OidcConstants.AuthorizeRequest.Scope, request.Scope);
-        clone.Method = HttpMethod.Post;
-        clone.Prepare();
-        
-        // make sure to send form encoded body (even if no parameters are in the body)
-        // todo: test with real implementation, maybe turn into a more formal feature
-        if (clone.Content == null)
-        {
-            clone.Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>());
-        }
-
-        HttpResponseMessage response;
-        try
-        {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            return ProtocolResponse.FromException<DeviceAuthorizationResponse>(ex);
-        }
-
-        return await ProtocolResponse.FromHttpResponseAsync<DeviceAuthorizationResponse>(response).ConfigureAwait();
+      clone.Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>());
     }
+
+    
+    try
+    {
+      using HttpResponseMessage response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+      return await ProtocolResponse.FromHttpResponseAsync<DeviceAuthorizationResponse>(response).ConfigureAwait();
+
+    }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (Exception ex)
+    {
+      return ProtocolResponse.FromException<DeviceAuthorizationResponse>(ex);
+    }
+    
+  }
 }
