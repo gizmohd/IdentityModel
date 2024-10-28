@@ -30,10 +30,11 @@ public static class HttpClientTokenRevocationExtensions
         clone.Parameters.AddOptional(OidcConstants.TokenIntrospectionRequest.TokenTypeHint, request.TokenTypeHint);
         clone.Prepare();
 
-        HttpResponseMessage response;
+         
         try
         {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            using HttpResponseMessage response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            return await ProtocolResponse.FromHttpResponseAsync<TokenRevocationResponse>(response).ConfigureAwait();
         }
         catch (OperationCanceledException)
         {
@@ -44,6 +45,6 @@ public static class HttpClientTokenRevocationExtensions
             return ProtocolResponse.FromException<TokenRevocationResponse>(ex);
         }
 
-        return await ProtocolResponse.FromHttpResponseAsync<TokenRevocationResponse>(response).ConfigureAwait();
+
     }
 }

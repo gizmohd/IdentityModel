@@ -37,10 +37,11 @@ public static class HttpClientDeviceFlowExtensions
             clone.Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>());
         }
 
-        HttpResponseMessage response;
+        
         try
         {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            using HttpResponseMessage response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            return await ProtocolResponse.FromHttpResponseAsync<DeviceAuthorizationResponse>(response).ConfigureAwait();
         }
         catch (OperationCanceledException)
         {
@@ -51,6 +52,6 @@ public static class HttpClientDeviceFlowExtensions
             return ProtocolResponse.FromException<DeviceAuthorizationResponse>(ex);
         }
 
-        return await ProtocolResponse.FromHttpResponseAsync<DeviceAuthorizationResponse>(response).ConfigureAwait();
+        
     }
 }

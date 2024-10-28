@@ -45,16 +45,17 @@ public static class HttpClientJsonWebKeySetExtensions
         clone.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/jwk-set+json"));
         clone.Prepare();
 
-        HttpResponseMessage response;
-
+    
         try
         {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            using HttpResponseMessage response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
 
             if (!response.IsSuccessStatusCode)
             {
                 return await ProtocolResponse.FromHttpResponseAsync<JsonWebKeySetResponse>(response, $"Error connecting to {clone.RequestUri!.AbsoluteUri}: {response.ReasonPhrase}").ConfigureAwait();
             }
+            return await ProtocolResponse.FromHttpResponseAsync<JsonWebKeySetResponse>(response).ConfigureAwait();
+
         }
         catch (OperationCanceledException)
         {
@@ -65,6 +66,5 @@ public static class HttpClientJsonWebKeySetExtensions
             return ProtocolResponse.FromException<JsonWebKeySetResponse>(ex, $"Error connecting to {clone.RequestUri!.AbsoluteUri}. {ex.Message}.");
         }
 
-        return await ProtocolResponse.FromHttpResponseAsync<JsonWebKeySetResponse>(response).ConfigureAwait();
     }
 }

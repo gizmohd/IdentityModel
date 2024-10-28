@@ -40,11 +40,11 @@ public static class HttpClientDynamicRegistrationExtensions
         {
             clone.SetBearerToken(request.Token!);
         }
-
-        HttpResponseMessage response;
+ 
         try
         {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            using HttpResponseMessage response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            return await ProtocolResponse.FromHttpResponseAsync<DynamicClientRegistrationResponse>(response).ConfigureAwait();
         }
         catch (OperationCanceledException)
         {
@@ -55,6 +55,6 @@ public static class HttpClientDynamicRegistrationExtensions
             return ProtocolResponse.FromException<DynamicClientRegistrationResponse>(ex);
         }
 
-        return await ProtocolResponse.FromHttpResponseAsync<DynamicClientRegistrationResponse>(response).ConfigureAwait();
+        
     }
 }

@@ -365,7 +365,7 @@ namespace IdentityModel.UnitTests
             disco.ErrorType.Should().Be(ResponseErrorType.Http);
             disco.HttpStatusCode.Should().Be(HttpStatusCode.InternalServerError);
             disco.Error.Should().Contain("Internal Server Error");
-            disco.Raw.Should().Be("not_json");
+            disco.Raw.Should().Be(null);
             disco.Json?.ValueKind.Should().Be(JsonValueKind.Undefined);
         }
 
